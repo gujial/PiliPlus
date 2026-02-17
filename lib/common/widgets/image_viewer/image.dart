@@ -3,7 +3,9 @@
 // found in the LICENSE file.
 
 import 'dart:io' show File;
+import 'dart:math' as math;
 
+import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/common/widgets/gesture/image_horizontal_drag_gesture_recognizer.dart';
 import 'package:PiliPlus/common/widgets/gesture/image_tap_gesture_recognizer.dart';
 import 'package:PiliPlus/common/widgets/image_viewer/viewer.dart';
@@ -37,11 +39,11 @@ class Image extends StatefulWidget {
     required this.minScale,
     required this.maxScale,
     required this.containerSize,
-    required this.isAnimating,
     required this.onDragStart,
     required this.onDragUpdate,
     required this.onDragEnd,
     required this.tapGestureRecognizer,
+    required this.doubleTapGestureRecognizer,
     required this.horizontalDragGestureRecognizer,
     required this.onChangePage,
   });
@@ -76,11 +78,11 @@ class Image extends StatefulWidget {
     required this.minScale,
     required this.maxScale,
     required this.containerSize,
-    required this.isAnimating,
     required this.onDragStart,
     required this.onDragUpdate,
     required this.onDragEnd,
     required this.tapGestureRecognizer,
+    required this.doubleTapGestureRecognizer,
     required this.horizontalDragGestureRecognizer,
     required this.onChangePage,
   }) : image = ResizeImage.resizeIfNeeded(
@@ -122,11 +124,11 @@ class Image extends StatefulWidget {
     required this.minScale,
     required this.maxScale,
     required this.containerSize,
-    required this.isAnimating,
     required this.onDragStart,
     required this.onDragUpdate,
     required this.onDragEnd,
     required this.tapGestureRecognizer,
+    required this.doubleTapGestureRecognizer,
     required this.horizontalDragGestureRecognizer,
     required this.onChangePage,
   }) : assert(
@@ -171,11 +173,11 @@ class Image extends StatefulWidget {
     required this.minScale,
     required this.maxScale,
     required this.containerSize,
-    required this.isAnimating,
     required this.onDragStart,
     required this.onDragUpdate,
     required this.onDragEnd,
     required this.tapGestureRecognizer,
+    required this.doubleTapGestureRecognizer,
     required this.horizontalDragGestureRecognizer,
     required this.onChangePage,
   }) : image = ResizeImage.resizeIfNeeded(
@@ -220,11 +222,11 @@ class Image extends StatefulWidget {
     required this.minScale,
     required this.maxScale,
     required this.containerSize,
-    required this.isAnimating,
     required this.onDragStart,
     required this.onDragUpdate,
     required this.onDragEnd,
     required this.tapGestureRecognizer,
+    required this.doubleTapGestureRecognizer,
     required this.horizontalDragGestureRecognizer,
     required this.onChangePage,
   }) : image = ResizeImage.resizeIfNeeded(
@@ -278,13 +280,13 @@ class Image extends StatefulWidget {
   final double maxScale;
   final Size containerSize;
 
-  final ValueGetter<bool> isAnimating;
   final ValueChanged<ScaleStartDetails>? onDragStart;
   final ValueChanged<ScaleUpdateDetails>? onDragUpdate;
   final ValueChanged<ScaleEndDetails>? onDragEnd;
   final ValueChanged<int>? onChangePage;
 
   final ImageTapGestureRecognizer tapGestureRecognizer;
+  final ImageDoubleTapGestureRecognizer doubleTapGestureRecognizer;
   final ImageHorizontalDragGestureRecognizer horizontalDragGestureRecognizer;
 
   @override
@@ -566,27 +568,27 @@ class _ImageState extends State<Image> with WidgetsBindingObserver {
     _isListeningToStream = false;
   }
 
-  Widget _debugBuildErrorWidget(BuildContext context, Object error) {
-    return Stack(
-      alignment: Alignment.center,
-      children: <Widget>[
-        const Positioned.fill(child: Placeholder(color: Color(0xCF8D021F))),
-        Padding(
-          padding: const EdgeInsets.all(4.0),
-          child: FittedBox(
-            child: Text(
-              '$error',
-              textAlign: TextAlign.center,
-              textDirection: TextDirection.ltr,
-              style: const TextStyle(
-                shadows: <Shadow>[Shadow(blurRadius: 1.0)],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  // Widget _debugBuildErrorWidget(BuildContext context, Object error) {
+  //   return Stack(
+  //     alignment: Alignment.center,
+  //     children: <Widget>[
+  //       const Positioned.fill(child: Placeholder(color: Color(0xCF8D021F))),
+  //       Padding(
+  //         padding: const EdgeInsets.all(4.0),
+  //         child: FittedBox(
+  //           child: Text(
+  //             '$error',
+  //             textAlign: TextAlign.center,
+  //             textDirection: TextDirection.ltr,
+  //             style: const TextStyle(
+  //               shadows: <Shadow>[Shadow(blurRadius: 1.0)],
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -594,38 +596,46 @@ class _ImageState extends State<Image> with WidgetsBindingObserver {
       if (widget.errorBuilder != null) {
         return widget.errorBuilder!(context, _lastException!, _lastStack);
       }
-      if (kDebugMode) {
-        return _debugBuildErrorWidget(context, _lastException!);
-      }
+      // if (kDebugMode) {
+      //   return _debugBuildErrorWidget(context, _lastException!);
+      // }
     }
 
-    Widget result;
+    final Size childSize;
+    final bool isLongPic;
+    double? minScale, maxScale;
     if (_imageInfo != null) {
-      // final isLongPic =
-      //     _imageInfo!.image.height / _imageInfo!.image.width >
-      //     StyleString.imgMaxRatio;
-      result = Viewer(
-        minScale: widget.minScale,
-        maxScale: widget.maxScale,
-        containerSize: widget.containerSize,
-        childSize: Size(
-          _imageInfo!.image.width.toDouble(),
-          _imageInfo!.image.height.toDouble(),
-        ),
-        isAnimating: widget.isAnimating,
-        onDragStart: widget.onDragStart,
-        onDragUpdate: widget.onDragUpdate,
-        onDragEnd: widget.onDragEnd,
-        tapGestureRecognizer: widget.tapGestureRecognizer,
-        horizontalDragGestureRecognizer: widget.horizontalDragGestureRecognizer,
-        onChangePage: widget.onChangePage,
-        child: RawImage(
-          image: _imageInfo!.image,
-        ),
-      );
+      final imgWidth = _imageInfo!.image.width.toDouble();
+      final imgHeight = _imageInfo!.image.height.toDouble();
+      final imgRatio = imgHeight / imgWidth;
+      isLongPic =
+          imgRatio > StyleString.imgMaxRatio &&
+          imgHeight > widget.containerSize.height;
+      if (isLongPic) {
+        final compatWidth = math.min(650.0, widget.containerSize.width);
+        minScale = compatWidth / widget.containerSize.height * imgRatio;
+        maxScale = math.max(widget.maxScale, minScale * 3);
+      }
+      childSize = Size(imgWidth, imgHeight);
     } else {
-      result = const SizedBox.expand();
+      childSize = .zero;
+      isLongPic = false;
     }
+    Widget result = Viewer(
+      minScale: minScale ?? widget.minScale,
+      maxScale: maxScale ?? widget.maxScale,
+      isLongPic: isLongPic,
+      containerSize: widget.containerSize,
+      childSize: childSize,
+      onDragStart: widget.onDragStart,
+      onDragUpdate: widget.onDragUpdate,
+      onDragEnd: widget.onDragEnd,
+      tapGestureRecognizer: widget.tapGestureRecognizer,
+      doubleTapGestureRecognizer: widget.doubleTapGestureRecognizer,
+      horizontalDragGestureRecognizer: widget.horizontalDragGestureRecognizer,
+      onChangePage: widget.onChangePage,
+      child: RawImage(image: _imageInfo?.image),
+    );
 
     if (!widget.excludeFromSemantics) {
       result = Semantics(
