@@ -413,25 +413,6 @@ abstract final class PageUtils {
     }
   }
 
-  static void onHorizontalPreviewState(
-    ScaffoldState state,
-    List<SourceModel> imgList,
-    int index,
-  ) {
-    state.showBottomSheet(
-      constraints: const BoxConstraints(),
-      (context) => GalleryViewer(
-        sources: imgList,
-        initIndex: index,
-        quality: GlobalData().imgQuality,
-      ),
-      enableDrag: false,
-      elevation: 0.0,
-      backgroundColor: Colors.transparent,
-      sheetAnimationStyle: AnimationStyle.noAnimation,
-    );
-  }
-
   static void inAppWebview(
     String url, {
     bool off = false,
@@ -624,6 +605,7 @@ abstract final class PageUtils {
           seasonId: isSeason ? id : null,
           epId: isSeason ? null : id,
           aid: aid,
+          progress: progress,
           off: off,
         );
       }
@@ -752,6 +734,7 @@ abstract final class PageUtils {
     dynamic seasonId,
     dynamic epId,
     int? aid,
+    int? progress, // milliseconds
     bool off = false,
   }) async {
     try {
@@ -777,6 +760,7 @@ abstract final class PageUtils {
             seasonId: response.seasonId,
             epId: episode.id,
             cover: episode.cover,
+            progress: progress,
             extraArguments: {
               'pgcItem': response,
             },
